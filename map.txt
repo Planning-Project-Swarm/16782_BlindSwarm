@@ -1,0 +1,9 @@
+robot,1,0,0,0.0
+goal,1,6.0,10.0,0.0
+obstacle,4,4,6,6
+obstacle,1,4,5,8
+obstacle,1,6,5,10
+obstacle,1,8,5,12
+obstacle,5,3,9,7
+obstacle,7,3,11,7
+obstacle,7,9,9,11
