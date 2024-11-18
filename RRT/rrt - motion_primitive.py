@@ -75,10 +75,10 @@ class RRT:
         # Define motion primitives: [distance, angle_change (radians)]
         self.motion_primitives = [
             [self.expand_dis, 0],  # Move forward
-            [self.expand_dis, np.deg2rad(30)],  # Turn 30 degrees left
-            [self.expand_dis, np.deg2rad(-30)],  # Turn 30 degrees right
-            [self.expand_dis, np.deg2rad(45)],  # Turn 45 degrees left
-            [self.expand_dis, np.deg2rad(-45)],  # Turn 45 degrees right
+            [self.expand_dis, np.deg2rad(30)],  # 30 degrees left
+            [self.expand_dis, np.deg2rad(-30)],  # 30 degrees right
+            [self.expand_dis, np.deg2rad(45)],  # 45 degrees left
+            [self.expand_dis, np.deg2rad(-45)],  # 45 degrees right
         ]
 
     def planning(self, animation=True):
