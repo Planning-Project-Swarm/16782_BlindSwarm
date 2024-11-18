@@ -82,8 +82,8 @@ def livePlot(robots, obstacles, goals, plans):
     
     # Plot initial robot positions as triangles
     for robot in robots:
-        pentagon = plt.Polygon(get_pentagon(robot['x'], robot['y'], robot['orientation']), color='blue')
-        ax.add_patch(triangle)
+        pentagon = get_house_shape(robot['x'], robot['y'], robot['orientation'])
+        ax.add_patch(pentagon)
     
     colormap = plt.cm.get_cmap('hsv', len(plans))
     robot_colors = cycle([colormap(i) for i in range(len(plans))])
@@ -101,14 +101,15 @@ def livePlot(robots, obstacles, goals, plans):
         for robot_id, plan in plans.items():
             if frame < len(plan):
                 robot = plan[frame]
-                pentagon = plt.Polygon(get_house_shape(robot['x'], robot['y'], robot['orientation']), color=robot_lines[robot_id].get_color())
+                pentagon = get_house_shape(robot['x'], robot['y'], robot['orientation'])
                 robot_lines[robot_id].set_data([], [])
-                ax.add_patch(triangle)
-        return robot_lines.values()
+                ax.add_patch(pentagon)
+                print(f"Robot {robot_id} at ({robot['x']}, {robot['y']}) with orientation {robot['orientation']}")
         return robot_lines.values()
 
-    ani = animation.FuncAnimation(fig, update, frames=range(max(len(plan) for plan in plans.values())), init_func=init, blit=True, repeat=False)
-    plt.legend()
+    ani = animation.FuncAnimation(fig, update, frames=range(max(len(plan) for plan in plans.values())), init_func=init, blit=True, repeat=True)
+    plt.show()
+    
 
 def get_house_shape(x, y, orientation, size=0.5):
     arrow = plt.Arrow(x, y, size * np.cos(orientation), size * np.sin(orientation), width=size, color='blue')
@@ -142,6 +143,8 @@ if __name__ == "__main__":
     if args.plan_file:
         plans = readPlanFile(args.plan_file)
         livePlot(robots, obstacles, goals, plans)
+        plt.show()
+        
     else:
         ax.set_title("Robot Initial Positions and Obstacles")
         plt.show()
