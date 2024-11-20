@@ -418,7 +418,7 @@ def writePlanFile(filename, path):
     with open(filename, 'w') as f:
         for waypoint in path:
             # x, y, th, t
-            print(waypoint)
+            # print(waypoint)
             f.write("{},{},{},{}\n".format(waypoint[0], waypoint[1], waypoint[2], waypoint[3]))
 
 def main():
@@ -437,8 +437,8 @@ def main():
     robot = robots[0]
     goal = goals[0]
 
-    print(robot)
-    print(goal)
+    # print(robot)
+    # print(goal)
 
     # Set Initial parameters
     rrt = RRT(
