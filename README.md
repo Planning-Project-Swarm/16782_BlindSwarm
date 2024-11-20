@@ -5,5 +5,5 @@ add input & output for each file: \
 Visualizer\
 RRT\
     Input: map.txt\
-    Otput: <robot_id>,<time_step>,<x>,<y>,<orientation>\
+    Otput: <robot_id>,<time_step>,<x>,<y>,<orientation> \
 CBS
