@@ -5,7 +5,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 
-show_animation = True
+show_animation = False
 
 class RRT:
     """
@@ -91,6 +91,8 @@ class RRT:
             [self.expand_dis, np.deg2rad(-60)],  # 60 degrees right
         ]
 
+        self.path = None
+
     def planning(self, animation=True):
         """
         RRT path planning with motion primitives
@@ -129,12 +131,13 @@ class RRT:
                 if self.check_collision(
                         final_node, self.obstacle_list, self.robot_radius):
                     self.node_list.append(final_node)
-                    return self.generate_final_course()
+                    self.path = self.generate_final_course()
+                    return self.path
                 else:
                     print("Goal is not reachable")
 
-            # if animation and i % 100 == 0:
-                # self.draw_graph(rnd_node)
+            if animation and i % 100 == 0:
+                self.draw_graph(rnd_node)
 
         return None  # Cannot find path
 
@@ -242,12 +245,15 @@ class RRT:
                       self.play_area.ymin],
                      "-k")
 
-        plt.plot(self.start.x, self.start.y, "xr")
+        plt.plot(self.start.x, self.start.y, "or")
         plt.plot(self.end.x, self.end.y, "xr")
         plt.axis("equal")
         plt.axis([self.min_rand - 5, self.max_rand + 5, self.min_rand - 5, self.max_rand + 5])
         plt.grid(True)
         plt.pause(0.01)
+        plt.plot([x for (x, y, th, t) in self.path], [y for (x, y, th, t) in self.path], '-r')
+        plt.show()
+
 
     @staticmethod
     def plot_circle(x, y, size, color="-b"):  # pragma: no cover

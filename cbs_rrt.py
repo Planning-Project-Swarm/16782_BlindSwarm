@@ -80,14 +80,15 @@ def cbs(robots, goals, obstacles):
             play_area=[0, 20, 0, 20],
             robot_radius=0.8
         )
-        # t x y th
-        path = rrt.planning(animation=False)
+        # x y th t
+        rrt.planning(animation=False)
 
-        if path is None:
+        if rrt.path is None:
             print("Cannot find path for robot ", robot['id'])
         else:
             print("Found path for robot ", robot['id'])
-            paths[robot['id']] = path
+            rrt.draw_graph()
+            paths[robot['id']] = rrt.path
 
     # detect and resolve conflicts
     while True:
@@ -110,7 +111,8 @@ def cbs(robots, goals, obstacles):
 def write_output_file(output_path, paths):
     with open(output_path, 'w') as file:
         for robot_id, path in paths.items():
-            path_str = ', '.join([f'{x:.2f},{y:.2f},{th:.2f},{t:.2f}' for x, y, th, t in path])
+            path_str = '; '.join([f'{x:.2f},{y:.2f},{th:.2f},{t:.2f}' for x, y, th, t in path])
+            # print(path_str)
             file.write(f'Robot {robot_id}: {path_str}\n')
 
 
