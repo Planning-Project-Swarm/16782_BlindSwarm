@@ -2,6 +2,7 @@ import os
 import argparse
 from rrt_mp import RRT
 
+import math
 def read_map_file(file_path):
     robots = []
     goals = []
@@ -45,9 +46,12 @@ def cbs(robots, goals, obstacles):
                 if r1_id >= r2_id:
                     continue
                 for t in range(min(len(path1), len(path2))):
-                    if path1[t] == path2[t]:
-                        # return conflict 
-                        return (r1_id, r2_id, t)
+                    x1, y1, _, _ = path1[t]
+                    x2, y2, _, _ = path2[t]
+
+                    # Check if the robots are within collision distance
+                    if math.hypot(x1 - x2, y1 - y2) <= 2 * 0.8:
+                        return (r1_id, r2_id, t)  # Conflict detected
         return None
 
     def resolve_conflict(conflict, paths, constraints):
@@ -98,13 +102,14 @@ def cbs(robots, goals, obstacles):
             break
         print("Conflict detected: robot {} and robot {} at time {}".format(*conflict))
         constraints = resolve_conflict(conflict, paths, constraints)
-        # replan for robot with constraints
+
         for robot_id, _, _ in constraints:
             print("Replanning robot ", robot_id)
             robot = next(r for r in robots if r['id'] == robot_id)
             goal = next(g for g in goals if g['id'] == robot_id)
             path = rrt.planning(animation=False, constraints=constraints)
             paths[robot_id] = path
+            
     return paths
 
 

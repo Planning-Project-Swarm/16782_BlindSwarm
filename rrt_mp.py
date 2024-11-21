@@ -45,7 +45,7 @@ class RRT:
                  goal_sample_rate=10,  # Increased to sample goal more often
                  max_iter=2000,  # Increased to allow more iterations
                  play_area=None,
-                 robot_radius=0.0,
+                 robot_radius=0.8,
                  ):
         """
         Setting Parameter
@@ -93,7 +93,7 @@ class RRT:
 
         self.path = None
 
-    def planning(self, animation=True):
+    def planning(self, animation=True, constraints=None):
         """
         RRT path planning with motion primitives
 
@@ -113,8 +113,9 @@ class RRT:
                 if self.check_if_outside_play_area(new_node, self.play_area) and \
                         self.check_collision(
                             new_node, self.obstacle_list, self.robot_radius):
-                    new_nodes.append(new_node)
-
+                    if constraints is None or self.check_constraints(new_node, constraints):
+                        new_nodes.append(new_node)
+                        
             if not new_nodes:
                 continue
 
@@ -287,6 +288,15 @@ class RRT:
             return False  # outside - bad
         else:
             return True  # inside - ok
+
+    def check_constraints(self, node, constraints):
+        for constraint in constraints:
+            robot_id, time, forbidden_path = constraint
+            if abs(node.t - time) < self.dt:
+                forbidden_x, forbidden_y, _, _ = forbidden_path
+                if math.hypot(node.x - forbidden_x, node.y - forbidden_y) < self.robot_radius:
+                    return False
+        return True
 
     def check_collision(self, node, obstacleList, robot_radius):
         if node is None:
