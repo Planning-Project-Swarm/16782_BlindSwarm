@@ -5,7 +5,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 
-show_animation = False
+show_animation = True
 
 class RRT:
     """
@@ -46,6 +46,7 @@ class RRT:
                  max_iter=2000,  # Increased to allow more iterations
                  play_area=None,
                  robot_radius=0.8,
+                 random_seed=7
                  ):
         """
         Setting Parameter
@@ -92,6 +93,7 @@ class RRT:
         ]
 
         self.path = None
+        random.seed(random_seed)
 
     def planning(self, animation=True, constraints=None):
         """
@@ -138,10 +140,18 @@ class RRT:
                     print("Goal is not reachable")
 
             if animation and i % 100 == 0:
-                self.draw_graph(rnd_node)
+                self.draw_graph(rnd_node, False)
 
         return None  # Cannot find path
-
+    
+    def reset(self):
+        self.node_list = []
+        self.obstacle_list = []
+        self.start = None
+        self.end = None
+        self.path = None
+        self.play_area = None
+        
     def apply_motion(self, node, motion):
         """
         Apply a motion primitive to a node
@@ -216,7 +226,7 @@ class RRT:
             rnd = self.Node(self.end.x, self.end.y, self.end.theta, 100.0)
         return rnd
 
-    def draw_graph(self, rnd=None):
+    def draw_graph(self, rnd=None, show_path=False):
         plt.clf()
         # for stopping simulation with the esc key.
         plt.gcf().canvas.mpl_connect(
@@ -252,7 +262,9 @@ class RRT:
         plt.axis([self.min_rand - 5, self.max_rand + 5, self.min_rand - 5, self.max_rand + 5])
         plt.grid(True)
         plt.pause(0.01)
-        plt.plot([x for (x, y, th, t) in self.path], [y for (x, y, th, t) in self.path], '-r')
+        if show_path:
+            plt.plot([x for (x, y, th, t) in self.path], [y for (x, y, th, t) in self.path], '-r')
+        plt.pause(0.01)
         plt.show()
 
 
@@ -291,10 +303,9 @@ class RRT:
 
     def check_constraints(self, node, constraints):
         for constraint in constraints:
-            robot_id, time, forbidden_path = constraint
-            if abs(node.t - time) < self.dt:
-                forbidden_x, forbidden_y, _, _ = forbidden_path
-                if math.hypot(node.x - forbidden_x, node.y - forbidden_y) < self.robot_radius:
+            cx, cy, ct = constraint
+            if abs(node.t - ct) < self.dt:
+                if math.hypot(node.x - cx, node.y - cy) < self.robot_radius:
                     return False
         return True
 
@@ -463,7 +474,7 @@ def main():
         rand_area=[0, 20],
         obstacle_list=obstacles,
         play_area=[0, 20, 0, 20],
-        robot_radius=0.8
+        robot_radius=0.03
     )
     path = rrt.planning(animation=show_animation)
 
@@ -471,15 +482,10 @@ def main():
         print("Cannot find path")
     else:
         print("Found path!")
-        writePlanFile('plan.txt', path)
+        writePlanFile(args.input_file.rstrip('.txt') + '_plan.txt', path)
         # Draw final path
         if show_animation:
-            rrt.draw_graph()
-            plt.plot([x for (x, y, th, t) in path], [y for (x, y, th, t) in path], '-r')
-            plt.grid(True)
-            # Need for Mac
-            plt.pause(0.01)
-            plt.show()
+            rrt.draw_graph(None, True)
 
 if __name__ == '__main__':
     main()
