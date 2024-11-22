@@ -10,7 +10,7 @@ class Visualizer:
 
     def viz_paths(self, paths, area, obstacles, save_animation=False, output_file="cbs_visualization.mp4"):
         """
-        Visualize paths and optionally save as an animation.
+        Visualize paths and optionally save as an animation with larger resolution and adjusted layout.
 
         :param paths: Dictionary of robot paths. Keys are robot IDs, values are lists of [x, y, th, t].
         :param area: [x_min, x_max, y_min, y_max]
@@ -18,7 +18,8 @@ class Visualizer:
         :param save_animation: Boolean, whether to save the animation as MP4.
         :param output_file: Name of the output MP4 file if save_animation is True.
         """
-        fig, ax = plt.subplots()
+        # Set a larger figure size for better visibility
+        fig, ax = plt.subplots(figsize=(10, 8))  # Adjust size for better detail
 
         # Plot the area boundary
         ax.plot([area[0], area[1], area[1], area[0], area[0]],
@@ -60,15 +61,18 @@ class Visualizer:
         # Create the animation
         ani = animation.FuncAnimation(fig, update, frames=max_frames, blit=True)
 
-        # Adjust legend position
+        # Adjust layout and save animation
         if save_animation:
-            ani.save(output_file, writer='ffmpeg', fps=5)
+            print(f"Saving video as {output_file}...")
+            plt.legend(loc='center left', bbox_to_anchor=(1.05, 0.5), fontsize=10)  # Move legend closer
+            plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
+            ani.save(output_file, writer='ffmpeg', fps=5, dpi=200)  # Higher resolution for details
             print(f"Video saved as {output_file}")
         else:
-            # Position the legend outside of the plot
-            plt.legend(loc='center left', bbox_to_anchor=(1.05, 0.5), fontsize=10)
-            plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to fit legend
+            plt.legend(loc='center left', bbox_to_anchor=(1.05, 0.5), fontsize=10)  # Move legend closer
+            plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
             plt.show()
+
 
 
 def read_map_file(file_path):
