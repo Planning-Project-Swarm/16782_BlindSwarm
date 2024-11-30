@@ -3,6 +3,7 @@ import matplotlib.animation as animation
 import argparse
 import os
 import math
+from swarm_io import SwarmIO
 
 class Visualizer:
     def __init__(self):
@@ -48,7 +49,7 @@ class Visualizer:
             # Assign color to path line
             path_lines[path_id], = ax.plot([], [], '-o', label=f"Robot {path_id}")
             start_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
-            end_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5, edgecolor='black')
+            end_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
             robot_circles[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.8)
 
             # Add circles to the plot
@@ -118,100 +119,26 @@ class Visualizer:
             plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
             plt.show()
 
-
-def read_map_file(file_path):
-    """
-    Read map information from a file.
-
-    :param file_path: Path to the map file.
-    :return: robots, goals, obstacles
-    """
-    robots = []
-    goals = []
-    obstacles = []
-
-    with open(file_path, 'r') as file:
-        for line in file:
-            parts = line.strip().split(',')
-            if parts[0] == 'robot':
-                robots.append({
-                    'id': int(parts[1]),
-                    'x': float(parts[2]),
-                    'y': float(parts[3]),
-                    'orientation': float(parts[4])
-                })
-            elif parts[0] == 'goal':
-                goals.append({
-                    'id': int(parts[1]),
-                    'x': float(parts[2]),
-                    'y': float(parts[3]),
-                    'orientation': float(parts[4])
-                })
-            elif parts[0] == 'obstacle':
-                obstacles.append({
-                    'x1': float(parts[1]),
-                    'y1': float(parts[2]),
-                    'x2': float(parts[3]),
-                    'y2': float(parts[4])
-                })
-            else:
-                raise ValueError(f"Invalid line in map file: '{line}'")
-    return robots, goals, obstacles
-
-
-def read_plan_file(file_path):
-    """
-    Read plan information from a file.
-
-    :param file_path: Path to the plan file.
-    :return: Dictionary with paths for each robot.
-    """
-    paths = {}
-
-    with open(file_path, 'r') as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue  # Skip empty lines
-
-            # Split the line into robot ID and path data
-            if ':' not in line:
-                raise ValueError(f"Invalid line in plan file: '{line}'")
-            
-            robot_id_str, path_data = line.split(':', 1)
-            robot_id = int(robot_id_str.replace('Robot', '').strip())
-
-            # Parse the path data
-            path_points = path_data.split(';')
-            paths[robot_id] = []
-            for point in path_points:
-                if point.strip():  # Skip empty segments
-                    coords = point.split(',')
-                    if len(coords) != 4:
-                        raise ValueError(f"Invalid path point: '{point}' in Robot {robot_id}")
-                    
-                    x, y, th, t = map(float, coords)
-                    paths[robot_id].append([x, y, th, t])
-
-    return paths
-
-
 def main():
     parser = argparse.ArgumentParser(description="Visualize paths of robots on a map.")
-    parser.add_argument('input_map', type=str, help="Name of the input map file (located in 'maps' folder).")
-    parser.add_argument('input_plan', type=str, help="Name of the input plan file (located in 'ouput' folder).")
+    parser.add_argument('map_file', type=str, help="Name of the input map file (located in 'maps' folder).")
+    parser.add_argument('plan_file', type=str, help="Name of the input plan file (located in 'ouput' folder).")
     args = parser.parse_args()
 
     maps_folder = "maps"
-    map_file_path = os.path.join(maps_folder, args.input_map)
+    map_file_path = os.path.join(maps_folder, args.map_file)
+    if not os.path.exists(map_file_path):
+        raise FileNotFoundError(f"Map file '{map_file_path}' not found.")
 
-    output_folder = "output"
-    plan_file_path = os.path.join(output_folder, args.input_plan)
+    plan_folder = "output"
+    plan_file_path = os.path.join(plan_folder, args.plan_file)
+    if not os.path.exists(plan_file_path):
+        raise FileNotFoundError(f"Plan file '{plan_file_path}' not found.")
 
-    # map_filename = 'map.txt'
-    # Read the map and plan
-    robots, goals, obstacles = read_map_file(map_file_path)
-    paths = read_plan_file(plan_file_path)
+    swarm_io = SwarmIO()
+
+    robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
+    paths = swarm_io.read_cbs_plan_file(plan_file_path)
 
     # Define the area (can be determined from map or manually set)
     area = [0, 20, 0, 20]

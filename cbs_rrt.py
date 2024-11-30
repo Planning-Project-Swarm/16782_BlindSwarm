@@ -4,6 +4,7 @@ from collections import defaultdict
 from visualizer_cbs import Visualizer
 from rrt_mp import RRT
 import math
+from swarm_io import SwarmIO
 
 class CBS:
 
@@ -136,66 +137,29 @@ class CBS:
         # save final result as mp4
         viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_final_viz.mp4")
 
-        
-    def write_output_file(self, output_path):
-        with open(output_path, 'w') as file:
-            for robot_id, path in self.paths.items():
-                path_str = '; '.join([f'{x:.2f},{y:.2f},{th:.2f},{t:.2f}' for x, y, th, t in path])
-                file.write(f'Robot {robot_id}: {path_str}\n')
-
-def read_map_file(file_path):
-    robots = []
-    goals = []
-    obstacles = []
-    
-    with open(file_path, 'r') as file:
-        for line in file:
-            parts = line.strip().split(',')
-            if parts[0] == 'robot':
-                robots.append({
-                    'id': int(parts[1]),
-                    'x': float(parts[2]),
-                    'y': float(parts[3]),
-                    'orientation': float(parts[4])
-                })
-            elif parts[0] == 'goal':
-                goals.append({
-                    'id': int(parts[1]),
-                    'x': float(parts[2]),
-                    'y': float(parts[3]),
-                    'orientation': float(parts[4])
-                })
-            elif parts[0] == 'obstacle':
-                obstacles.append({
-                    'x1': float(parts[1]),
-                    'y1': float(parts[2]),
-                    'x2': float(parts[3]),
-                    'y2': float(parts[4])
-                })
-            else:
-                raise ValueError(f"Invalid line in map file: '{line}'")
-    return robots, goals, obstacles
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Run CBS for a single map file.")
-    parser.add_argument('input_file', type=str, help="Name of the input map file (located in 'maps' folder).")
+    parser.add_argument('map_file', type=str, help="Name of the input map file (located in 'maps' folder).")
     args = parser.parse_args()
 
     maps_folder = "maps"
-    input_file_path = os.path.join(maps_folder, args.input_file)
-
-    if not os.path.exists(input_file_path):
-        raise FileNotFoundError(f"Input file '{input_file_path}' not found.")
+    map_file_path = os.path.join(maps_folder, args.map_file)
+    if not os.path.exists(map_file_path):
+        raise FileNotFoundError(f"Map file '{map_file_path}' not found.")
     
-    output_folder = "output"
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    base_name = os.path.splitext(os.path.basename(args.input_file))[0]
-    output_file = os.path.join(output_folder, f"{base_name}_output.txt")
-
-    robots, goals, obstacles = read_map_file(input_file_path)
+    swarm_io = SwarmIO()
+    robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
 
     cbs = CBS(robots, goals, obstacles, [0, 20])
     cbs.planning()
-    cbs.write_output_file(output_file)
-    print(f"Processed file '{args.input_file}' success。 Output saved to '{output_file}'.")
+
+    output_folder = "output"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    base_name = os.path.splitext(os.path.basename(args.map_file))[0]
+    output_file = os.path.join(output_folder, f"{base_name}_output.txt")
+    swarm_io.write_cbs_output_file(cbs.paths, output_file)
+    print(f"Processed file '{args.map_file}' success。 Output saved to '{output_file}'.")
+
+if __name__ == "__main__":
+    main()

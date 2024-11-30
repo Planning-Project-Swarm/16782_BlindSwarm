@@ -4,6 +4,7 @@ import os
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+from swarm_io import SwarmIO
 
 show_animation = True
 
@@ -367,66 +368,25 @@ class RRT:
         dy = node1.y - node2.y
         return math.hypot(dx, dy)
 
-def readMapFile(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-
-    robots = []
-    obstacles = []
-    goals = []
-
-    for line in lines:
-        parts = line.strip().split(',')
-        if parts[0] == 'robot':
-            robots.append({
-                'id': int(parts[1]),
-                'x': float(parts[2]),
-                'y': float(parts[3]),
-                'orientation': float(parts[4])
-            })
-        elif parts[0] == 'obstacle':
-            obstacles.append({
-                'x1': float(parts[1]),
-                'y1': float(parts[2]),
-                'x2': float(parts[3]),
-                'y2': float(parts[4])
-            })
-        elif parts[0] == 'goal':
-            goals.append({
-                'id': int(parts[1]),
-                'x': float(parts[2]),
-                'y': float(parts[3]),
-                'orientation': float(parts[4])
-            })
-
-    return robots, obstacles, goals
-
-def writePlanFile(filename, path):
-    # robot_id = 1  # Assuming robot ID is 1
-    # dt = 1.0      # Time step
-
-    with open(filename, 'w') as f:
-        for waypoint in path:
-            # x, y, th, t
-            # print(waypoint)
-            f.write("{},{},{},{}\n".format(waypoint[0], waypoint[1], waypoint[2], waypoint[3]))
-
 def main():
     parser = argparse.ArgumentParser(description="Run RRT for a single map file.")
-    parser.add_argument('input_file', type=str, help="Name of the input map file (located in 'maps' folder).")
+    parser.add_argument('map_file', type=str, help="Name of the input map file (located in 'maps' folder).")
     args = parser.parse_args()
 
     maps_folder = "maps"
-    input_file_path = os.path.join(maps_folder, args.input_file)
+    map_file_path = os.path.join(maps_folder, args.map_file)
+    if not os.path.exists(map_file_path):
+        raise FileNotFoundError(f"Map file '{map_file_path}' not found.")
+    
+    swarm_io = SwarmIO()
+    robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
 
-    # map_filename = 'map.txt'
-    robots, obstacles, goals = readMapFile(input_file_path)
     print("Start RRT path planning with motion primitives")
 
-    # Assuming only one robot and one goal for now
+    # Plan for only one robot and one goal
     robot = robots[0]
     goal = goals[0]
-    
+
     # Set Initial parameters
     rrt = RRT(
         start=[robot['x'], robot['y'], robot['orientation']],
@@ -442,8 +402,7 @@ def main():
         print("\033[91m[ERROR]\033[0m Cannot find path")
     else:
         print("\033[92mFound path!\033[0m")
-        writePlanFile(args.input_file.rstrip('.txt') + '_plan.txt', rrt.path)
-        # Draw final path
+        swarm_io.write_rrt_plan_file(args.map_file.rstrip('.txt') + '_plan.txt', rrt.path)
         if show_animation:
             rrt.draw_graph(None, True)
 
