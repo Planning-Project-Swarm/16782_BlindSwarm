@@ -2,19 +2,22 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import argparse
 import os
+import math
+from swarm_io import SwarmIO
 
 class Visualizer:
     def __init__(self):
         """Initialize the Visualizer without storing area and obstacles."""
         pass
 
-    def viz_paths(self, paths, area, obstacles, save_animation=False, output_file="cbs_visualization.mp4"):
+    def viz_paths(self, paths, area, obstacles, robot_radius, save_animation=False, output_file="cbs_visualization.mp4"):
         """
         Visualize paths and optionally save as an animation with larger resolution and adjusted layout.
 
         :param paths: Dictionary of robot paths. Keys are robot IDs, values are lists of [x, y, th, t].
         :param area: [x_min, x_max, y_min, y_max]
         :param obstacles: List of obstacles, each represented as a dict with keys 'x1', 'y1', 'x2', 'y2'
+        :param robot_radius: Radius of each robot for visualization.
         :param save_animation: Boolean, whether to save the animation as MP4.
         :param output_file: Name of the output MP4 file if save_animation is True.
         """
@@ -39,21 +42,64 @@ class Visualizer:
         path_lines = {}
         start_points = {}
         end_points = {}
+        orientation_arrows = {}
+        robot_circles = {}
 
         for path_id, path in paths.items():
+            # Assign color to path line
             path_lines[path_id], = ax.plot([], [], '-o', label=f"Robot {path_id}")
-            start_points[path_id] = ax.plot([], [], "or")[0]
-            end_points[path_id] = ax.plot([], [], "xr")[0]
+            start_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
+            end_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
+            robot_circles[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.8)
+
+            # Add circles to the plot
+            ax.add_patch(start_points[path_id])
+            ax.add_patch(end_points[path_id])
+            ax.add_patch(robot_circles[path_id])
+
+            orientation_arrows[path_id] = None  # Placeholder for arrows
+
+        # Add text for displaying current time
+        time_text = ax.text(0.05, 0.95, '', transform=ax.transAxes, fontsize=12, verticalalignment='top')
 
         def update(frame):
             for path_id, path in paths.items():
                 if len(path) > frame:
-                    x_coords = [point[0] for point in path[:frame+1]]
-                    y_coords = [point[1] for point in path[:frame+1]]
+                    x_coords = [point[0] for point in path[:frame + 1]]
+                    y_coords = [point[1] for point in path[:frame + 1]]
+                    theta = [point[2] for point in path[:frame + 1]]  # Get orientations up to the current frame
+
+                    # Update path lines
                     path_lines[path_id].set_data(x_coords, y_coords)
-                    start_points[path_id].set_data(path[0][0], path[0][1])
-                    end_points[path_id].set_data(path[-1][0], path[-1][1])
-            return list(path_lines.values()) + list(start_points.values()) + list(end_points.values())
+
+                    # Update start point
+                    start_points[path_id].center = (path[0][0], path[0][1])
+
+                    # Update end point
+                    end_points[path_id].center = (path[-1][0], path[-1][1])
+
+                    # Update robot circle for current position
+                    robot_circles[path_id].center = (path[frame][0], path[frame][1])
+
+                    # Draw an arrow for the last/current position at this frame
+                    current_x, current_y, current_theta = path[frame][0], path[frame][1], path[frame][2]
+                    if orientation_arrows[path_id]:
+                        orientation_arrows[path_id].remove()  # Remove the previous arrow
+                    orientation_arrows[path_id] = ax.arrow(
+                        current_x, current_y,  # Start position of the arrow
+                        robot_radius * math.cos(current_theta),  # X-component of arrow length
+                        robot_radius * math.sin(current_theta),  # Y-component of arrow length
+                        head_length=robot_radius,  # Length of the arrowhead
+                        head_width=robot_radius,  # Width of the arrowhead
+                        color=path_lines[path_id].get_color(),  # Match arrow color to the path
+                        alpha=0.8
+                    )
+
+            # Update time text
+            current_time = frame
+            time_text.set_text(f"Time: {current_time:.1f}")
+
+            return list(path_lines.values()) + list(start_points.values()) + list(end_points.values()) + list(orientation_arrows.values()) + list(robot_circles.values()) + [time_text]
 
         # Determine the maximum length of all paths
         max_frames = max(len(path) for path in paths.values())
@@ -73,108 +119,35 @@ class Visualizer:
             plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
             plt.show()
 
-
-
-def read_map_file(file_path):
-    """
-    Read map information from a file.
-
-    :param file_path: Path to the map file.
-    :return: robots, goals, obstacles
-    """
-    robots = []
-    goals = []
-    obstacles = []
-
-    with open(file_path, 'r') as file:
-        for line in file:
-            parts = line.strip().split(',')
-            if parts[0] == 'robot':
-                robots.append({
-                    'id': int(parts[1]),
-                    'x': float(parts[2]),
-                    'y': float(parts[3]),
-                    'orientation': float(parts[4])
-                })
-            elif parts[0] == 'goal':
-                goals.append({
-                    'id': int(parts[1]),
-                    'x': float(parts[2]),
-                    'y': float(parts[3]),
-                    'orientation': float(parts[4])
-                })
-            elif parts[0] == 'obstacle':
-                obstacles.append({
-                    'x1': float(parts[1]),
-                    'y1': float(parts[2]),
-                    'x2': float(parts[3]),
-                    'y2': float(parts[4])
-                })
-            else:
-                raise ValueError(f"Invalid line in map file: '{line}'")
-    return robots, goals, obstacles
-
-
-def read_plan_file(file_path):
-    """
-    Read plan information from a file.
-
-    :param file_path: Path to the plan file.
-    :return: Dictionary with paths for each robot.
-    """
-    paths = {}
-
-    with open(file_path, 'r') as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue  # Skip empty lines
-
-            # Split the line into robot ID and path data
-            if ':' not in line:
-                raise ValueError(f"Invalid line in plan file: '{line}'")
-            
-            robot_id_str, path_data = line.split(':', 1)
-            robot_id = int(robot_id_str.replace('Robot', '').strip())
-
-            # Parse the path data
-            path_points = path_data.split(';')
-            paths[robot_id] = []
-            for point in path_points:
-                if point.strip():  # Skip empty segments
-                    coords = point.split(',')
-                    if len(coords) != 4:
-                        raise ValueError(f"Invalid path point: '{point}' in Robot {robot_id}")
-                    
-                    x, y, th, t = map(float, coords)
-                    paths[robot_id].append([x, y, th, t])
-
-    return paths
-
-
 def main():
     parser = argparse.ArgumentParser(description="Visualize paths of robots on a map.")
-    parser.add_argument('input_map', type=str, help="Name of the input map file (located in 'maps' folder).")
-    parser.add_argument('input_plan', type=str, help="Name of the input plan file (located in 'ouput' folder).")
+    parser.add_argument('map_file', type=str, help="Name of the input map file (located in 'maps' folder).")
+    parser.add_argument('plan_file', type=str, help="Name of the input plan file (located in 'ouput' folder).")
     args = parser.parse_args()
 
     maps_folder = "maps"
-    map_file_path = os.path.join(maps_folder, args.input_map)
+    map_file_path = os.path.join(maps_folder, args.map_file)
+    if not os.path.exists(map_file_path):
+        raise FileNotFoundError(f"Map file '{map_file_path}' not found.")
 
-    output_folder = "output"
-    plan_file_path = os.path.join(output_folder, args.input_plan)
+    plan_folder = "output"
+    plan_file_path = os.path.join(plan_folder, args.plan_file)
+    if not os.path.exists(plan_file_path):
+        raise FileNotFoundError(f"Plan file '{plan_file_path}' not found.")
 
-    # map_filename = 'map.txt'
-    # Read the map and plan
-    robots, goals, obstacles = read_map_file(map_file_path)
-    paths = read_plan_file(plan_file_path)
+    swarm_io = SwarmIO()
+
+    robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
+    paths = swarm_io.read_cbs_plan_file(plan_file_path)
 
     # Define the area (can be determined from map or manually set)
     area = [0, 20, 0, 20]
+    robot_radius = 0.5
 
     # Initialize the Visualizer and create the video
     visualizer = Visualizer()
-    visualizer.viz_paths(paths, area, obstacles, save_animation=True, output_file="cbs_visualization.mp4")
+    visualizer.viz_paths(paths, area, obstacles, robot_radius, save_animation=False, output_file="cbs_visualization.mp4")
+    visualizer.viz_paths(paths, area, obstacles, robot_radius, save_animation=True, output_file="cbs_visualization.mp4")
 
 
 if __name__ == "__main__":

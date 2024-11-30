@@ -4,6 +4,7 @@ import os
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+from swarm_io import SwarmIO
 
 show_animation = True
 
@@ -45,7 +46,7 @@ class RRT:
                  goal_sample_rate=10,  # Increased to sample goal more often
                  max_iter=2000,  # Increased to allow more iterations
                  play_area=None,
-                 robot_radius=0.8,
+                 robot_radius=0.5,
                  random_seed=7
                  ):
         """
@@ -60,7 +61,7 @@ class RRT:
 
         """
         self.start = self.Node(start[0], start[1], start[2], 0.0)
-        # dummy t
+        # dummy t = 100.0 for goal node
         self.end = self.Node(goal[0], goal[1], goal[2], 100.0)
         self.min_rand = rand_area[0]
         self.max_rand = rand_area[1]
@@ -76,7 +77,7 @@ class RRT:
         self.node_list = []
         self.robot_radius = robot_radius
 
-        # TODO: hard-coded discrete time step 
+        # hard-coded discrete time step 
         self.dt = 1.0
 
         # Define motion primitives: [distance, angle_change (radians)]
@@ -129,28 +130,20 @@ class RRT:
 
             # Check if goal is reached
             if self.calc_dist_to_goal(best_new_node.x, best_new_node.y) <= self.expand_dis:
-                final_node = self.steer(best_new_node, self.end,
-                                        self.expand_dis)
+                # goal reached, but we still need to steer the orientation
+                final_node = self.steer(best_new_node, self.end)
                 if self.check_collision(
                         final_node, self.obstacle_list, self.robot_radius):
                     self.node_list.append(final_node)
                     self.path = self.generate_final_course()
-                    return self.path
+                    return
                 else:
-                    print("Goal is not reachable")
+                    print("\033[93m[WARN]\033[0m Goal is nearly extended, but there is collision with obstacle")
 
             if animation and i % 100 == 0:
                 self.draw_graph(rnd_node, False)
 
-        return None  # Cannot find path
-    
-    def reset(self):
-        self.node_list = []
-        self.obstacle_list = []
-        self.start = None
-        self.end = None
-        self.path = None
-        self.play_area = None
+        return  # Cannot find path
         
     def apply_motion(self, node, motion):
         """
@@ -174,22 +167,9 @@ class RRT:
 
         return new_node
 
-    def steer(self, from_node, to_node, extend_length=float("inf")):
+    def steer(self, from_node, to_node):
 
-        new_node = self.Node(from_node.x, from_node.y, from_node.theta, from_node.t + self.dt)
-        d, theta = self.calc_distance_and_angle(new_node, to_node)
-
-        angle_difference = self.normalize_angle(theta - from_node.theta)
-        # Limit the angle change
-        if abs(angle_difference) > np.deg2rad(60.0):
-            angle_difference = np.clip(angle_difference, -np.deg2rad(60.0), np.deg2rad(60.0))
-
-        new_node.theta += angle_difference
-
-        # Move towards to_node
-        move_distance = min(self.expand_dis, d)
-        new_node.x += move_distance * math.cos(new_node.theta)
-        new_node.y += move_distance * math.sin(new_node.theta)
+        new_node = self.Node(to_node.x, to_node.y, to_node.theta, from_node.t + self.dt)
 
         new_node.path_x = [from_node.x, new_node.x]
         new_node.path_y = [from_node.y, new_node.y]
@@ -305,7 +285,9 @@ class RRT:
         for constraint in constraints:
             cx, cy, ct = constraint
             if abs(node.t - ct) < self.dt:
-                if math.hypot(node.x - cx, node.y - cy) < self.robot_radius:
+                # Check if the node is too close to the constraint
+                # Set a threshold of 1.1 * robot_radius to allow some buffer
+                if math.hypot(node.x - cx, node.y - cy) < 1.1 * self.robot_radius:
                     return False
         return True
 
@@ -381,91 +363,29 @@ class RRT:
             return False
 
     @staticmethod
-    def calc_distance_and_angle(from_node, to_node):
-        dx = to_node.x - from_node.x
-        dy = to_node.y - from_node.y
-        d = math.hypot(dx, dy)
-        theta = math.atan2(dy, dx)
-        return d, theta
-
-    @staticmethod
-    def normalize_angle(angle):
-        while angle > math.pi:
-            angle -= 2.0 * math.pi
-
-        while angle < -math.pi:
-            angle += 2.0 * math.pi
-
-        return angle
-
-    @staticmethod
     def calc_distance(node1, node2):
         dx = node1.x - node2.x
         dy = node1.y - node2.y
         return math.hypot(dx, dy)
 
-def readMapFile(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-
-    robots = []
-    obstacles = []
-    goals = []
-
-    for line in lines:
-        parts = line.strip().split(',')
-        if parts[0] == 'robot':
-            robots.append({
-                'id': int(parts[1]),
-                'x': float(parts[2]),
-                'y': float(parts[3]),
-                'orientation': float(parts[4])
-            })
-        elif parts[0] == 'obstacle':
-            obstacles.append({
-                'x1': float(parts[1]),
-                'y1': float(parts[2]),
-                'x2': float(parts[3]),
-                'y2': float(parts[4])
-            })
-        elif parts[0] == 'goal':
-            goals.append({
-                'id': int(parts[1]),
-                'x': float(parts[2]),
-                'y': float(parts[3]),
-                'orientation': float(parts[4])
-            })
-
-    return robots, obstacles, goals
-
-def writePlanFile(filename, path):
-    # robot_id = 1  # Assuming robot ID is 1
-    # dt = 1.0      # Time step
-
-    with open(filename, 'w') as f:
-        for waypoint in path:
-            # x, y, th, t
-            # print(waypoint)
-            f.write("{},{},{},{}\n".format(waypoint[0], waypoint[1], waypoint[2], waypoint[3]))
-
 def main():
     parser = argparse.ArgumentParser(description="Run RRT for a single map file.")
-    parser.add_argument('input_file', type=str, help="Name of the input map file (located in 'maps' folder).")
+    parser.add_argument('map_file', type=str, help="Name of the input map file (located in 'maps' folder).")
     args = parser.parse_args()
 
     maps_folder = "maps"
-    input_file_path = os.path.join(maps_folder, args.input_file)
+    map_file_path = os.path.join(maps_folder, args.map_file)
+    if not os.path.exists(map_file_path):
+        raise FileNotFoundError(f"Map file '{map_file_path}' not found.")
+    
+    swarm_io = SwarmIO()
+    robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
 
-    # map_filename = 'map.txt'
-    robots, obstacles, goals = readMapFile(input_file_path)
     print("Start RRT path planning with motion primitives")
 
-    # Assuming only one robot and one goal for now
+    # Plan for only one robot and one goal
     robot = robots[0]
     goal = goals[0]
-
-    # print(robot)
-    # print(goal)
 
     # Set Initial parameters
     rrt = RRT(
@@ -474,16 +394,15 @@ def main():
         rand_area=[0, 20],
         obstacle_list=obstacles,
         play_area=[0, 20, 0, 20],
-        robot_radius=0.03
+        robot_radius=0.5
     )
-    path = rrt.planning(animation=show_animation)
+    rrt.planning(animation=show_animation)
 
-    if path is None:
-        print("Cannot find path")
+    if rrt.path is None:
+        print("\033[91m[ERROR]\033[0m Cannot find path")
     else:
-        print("Found path!")
-        writePlanFile(args.input_file.rstrip('.txt') + '_plan.txt', path)
-        # Draw final path
+        print("\033[92mFound path!\033[0m")
+        swarm_io.write_rrt_plan_file(args.map_file.rstrip('.txt') + '_plan.txt', rrt.path)
         if show_animation:
             rrt.draw_graph(None, True)
 
