@@ -95,7 +95,6 @@ class Visualizer:
                     )
 
             # Update time text
-            # current_time = max(path[frame][3] for path_id, path in paths.items() if len(path) > frame)
             current_time = frame
             time_text.set_text(f"Time: {current_time:.1f}")
 

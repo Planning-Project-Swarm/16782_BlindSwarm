@@ -29,10 +29,6 @@ class CBS:
             conflicts = defaultdict(list)
             robot_ids = list(paths.keys())
 
-            # for i, r1_id in enumerate(robot_ids):
-            #     print(len(paths[r1_id]))
-            # print("=====")
-
             for i, r1_id in enumerate(robot_ids):
                 for r2_id in robot_ids[i + 1:]:
                     # print("Checking conflicts between robot {} and robot {}".format(r1_id, r2_id))
@@ -40,13 +36,11 @@ class CBS:
                     path1, path2 = paths[r1_id], paths[r2_id]
                     len1, len2 = len(path1), len(path2)
                     max_len = max(len1, len2)
-                    # print(max_len)
 
                     for t in range(max_len):
                         # Get positions for the current time or the last available position
                         x1, y1, _, _ = path1[t] if t < len1 else path1[-1]
                         x2, y2, _, _ = path2[t] if t < len2 else path2[-1]
-
                         # print("Robot {} at ({}, {}) and robot {} at ({}, {})".format(r1_id, x1, y1, r2_id, x2, y2))
 
                         # Check if the robots are within collision distance
@@ -99,7 +93,6 @@ class CBS:
                 print("\033[93m[WARN]\033[0m Cannot find path for robot", robot['id'])
             else:
                 print("Found path for robot ", robot['id'])
-                # rrt.draw_graph()
                 self.paths[robot['id']] = rrt.path
 
 
@@ -132,7 +125,6 @@ class CBS:
                     print("\033[91m[ERROR]\033[0m Cannot find path for robot", robot_id)
                 else:
                     print("Found path for robot ", robot_id)
-                    # rrt.draw_graph()
                     self.paths[robot_id] = rrt.path
 
             # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_conflict_viz_{}.mp4".format(i))

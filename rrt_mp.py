@@ -60,7 +60,7 @@ class RRT:
 
         """
         self.start = self.Node(start[0], start[1], start[2], 0.0)
-        # dummy t
+        # dummy t = 100.0 for goal node
         self.end = self.Node(goal[0], goal[1], goal[2], 100.0)
         self.min_rand = rand_area[0]
         self.max_rand = rand_area[1]
@@ -76,7 +76,7 @@ class RRT:
         self.node_list = []
         self.robot_radius = robot_radius
 
-        # TODO: hard-coded discrete time step 
+        # hard-coded discrete time step 
         self.dt = 1.0
 
         # Define motion primitives: [distance, angle_change (radians)]
@@ -169,18 +169,6 @@ class RRT:
     def steer(self, from_node, to_node):
 
         new_node = self.Node(to_node.x, to_node.y, to_node.theta, from_node.t + self.dt)
-        # d, theta = self.calc_distance_and_angle(new_node, to_node)
-
-        # angle_difference = self.normalize_angle(theta - from_node.theta)
-        # # Limit the angle change
-        # if abs(angle_difference) > np.deg2rad(60.0):
-        #     angle_difference = np.clip(angle_difference, -np.deg2rad(60.0), np.deg2rad(60.0))
-
-        # new_node.theta += angle_difference
-
-        # Move towards to_node
-        # new_node.x += 
-        # new_node.y += 
 
         new_node.path_x = [from_node.x, new_node.x]
         new_node.path_y = [from_node.y, new_node.y]
@@ -438,10 +426,7 @@ def main():
     # Assuming only one robot and one goal for now
     robot = robots[0]
     goal = goals[0]
-
-    # print(robot)
-    # print(goal)
-
+    
     # Set Initial parameters
     rrt = RRT(
         start=[robot['x'], robot['y'], robot['orientation']],
