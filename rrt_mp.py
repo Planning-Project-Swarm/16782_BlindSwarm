@@ -45,7 +45,7 @@ class RRT:
                  goal_sample_rate=10,  # Increased to sample goal more often
                  max_iter=2000,  # Increased to allow more iterations
                  play_area=None,
-                 robot_radius=0.8,
+                 robot_radius=0.5,
                  random_seed=7
                  ):
         """
@@ -129,28 +129,20 @@ class RRT:
 
             # Check if goal is reached
             if self.calc_dist_to_goal(best_new_node.x, best_new_node.y) <= self.expand_dis:
-                final_node = self.steer(best_new_node, self.end,
-                                        self.expand_dis)
+                # goal reached, but we still need to steer the orientation
+                final_node = self.steer(best_new_node, self.end)
                 if self.check_collision(
                         final_node, self.obstacle_list, self.robot_radius):
                     self.node_list.append(final_node)
                     self.path = self.generate_final_course()
-                    return self.path
+                    return
                 else:
-                    print("Goal is not reachable")
+                    print("\033[93m[WARN]\033[0m Goal is nearly extended, but there is collision with obstacle")
 
             if animation and i % 100 == 0:
                 self.draw_graph(rnd_node, False)
 
-        return None  # Cannot find path
-    
-    def reset(self):
-        self.node_list = []
-        self.obstacle_list = []
-        self.start = None
-        self.end = None
-        self.path = None
-        self.play_area = None
+        return  # Cannot find path
         
     def apply_motion(self, node, motion):
         """
@@ -174,22 +166,21 @@ class RRT:
 
         return new_node
 
-    def steer(self, from_node, to_node, extend_length=float("inf")):
+    def steer(self, from_node, to_node):
 
-        new_node = self.Node(from_node.x, from_node.y, from_node.theta, from_node.t + self.dt)
-        d, theta = self.calc_distance_and_angle(new_node, to_node)
+        new_node = self.Node(to_node.x, to_node.y, to_node.theta, from_node.t + self.dt)
+        # d, theta = self.calc_distance_and_angle(new_node, to_node)
 
-        angle_difference = self.normalize_angle(theta - from_node.theta)
-        # Limit the angle change
-        if abs(angle_difference) > np.deg2rad(60.0):
-            angle_difference = np.clip(angle_difference, -np.deg2rad(60.0), np.deg2rad(60.0))
+        # angle_difference = self.normalize_angle(theta - from_node.theta)
+        # # Limit the angle change
+        # if abs(angle_difference) > np.deg2rad(60.0):
+        #     angle_difference = np.clip(angle_difference, -np.deg2rad(60.0), np.deg2rad(60.0))
 
-        new_node.theta += angle_difference
+        # new_node.theta += angle_difference
 
         # Move towards to_node
-        move_distance = min(self.expand_dis, d)
-        new_node.x += move_distance * math.cos(new_node.theta)
-        new_node.y += move_distance * math.sin(new_node.theta)
+        # new_node.x += 
+        # new_node.y += 
 
         new_node.path_x = [from_node.x, new_node.x]
         new_node.path_y = [from_node.y, new_node.y]
@@ -305,7 +296,9 @@ class RRT:
         for constraint in constraints:
             cx, cy, ct = constraint
             if abs(node.t - ct) < self.dt:
-                if math.hypot(node.x - cx, node.y - cy) < self.robot_radius:
+                # Check if the node is too close to the constraint
+                # Set a threshold of 1.1 * robot_radius to allow some buffer
+                if math.hypot(node.x - cx, node.y - cy) < 1.1 * self.robot_radius:
                     return False
         return True
 
@@ -379,24 +372,6 @@ class RRT:
             return True
         else:
             return False
-
-    @staticmethod
-    def calc_distance_and_angle(from_node, to_node):
-        dx = to_node.x - from_node.x
-        dy = to_node.y - from_node.y
-        d = math.hypot(dx, dy)
-        theta = math.atan2(dy, dx)
-        return d, theta
-
-    @staticmethod
-    def normalize_angle(angle):
-        while angle > math.pi:
-            angle -= 2.0 * math.pi
-
-        while angle < -math.pi:
-            angle += 2.0 * math.pi
-
-        return angle
 
     @staticmethod
     def calc_distance(node1, node2):
@@ -474,15 +449,15 @@ def main():
         rand_area=[0, 20],
         obstacle_list=obstacles,
         play_area=[0, 20, 0, 20],
-        robot_radius=0.03
+        robot_radius=0.5
     )
-    path = rrt.planning(animation=show_animation)
+    rrt.planning(animation=show_animation)
 
-    if path is None:
-        print("Cannot find path")
+    if rrt.path is None:
+        print("\033[91m[ERROR]\033[0m Cannot find path")
     else:
-        print("Found path!")
-        writePlanFile(args.input_file.rstrip('.txt') + '_plan.txt', path)
+        print("\033[92mFound path!\033[0m")
+        writePlanFile(args.input_file.rstrip('.txt') + '_plan.txt', rrt.path)
         # Draw final path
         if show_animation:
             rrt.draw_graph(None, True)
