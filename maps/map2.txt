@@ -1,0 +1,11 @@
+robot, 1, 19.88, 12.36, 5.60
+robot, 2, 16.32, 19.25, 0.52
+robot, 3, 6.59, 17.08, 3.40
+robot, 4, 11.32, 11.32, 0.72
+robot, 5, 8.53, 15.71, 5.50
+robot, 6, 11.41, 4.87, 3.84
+robot, 7, 17.62, 15.0, 4.72
+robot, 8, 4.5, 7.7, 3.2
+leader, 20, 20
+formation, formation1, 60
+formation, formation2, 60

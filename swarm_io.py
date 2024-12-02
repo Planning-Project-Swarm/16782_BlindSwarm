@@ -63,6 +63,10 @@ class SwarmIO:
                         'x2': float(parts[3]),
                         'y2': float(parts[4])
                     })
+                elif parts[0] == 'formation':
+                    pass
+                elif parts[0] == 'leader':
+                    pass
                 else:
                     raise ValueError(f"Invalid line in map file: '{line}'")
         return robots, goals, obstacles
@@ -80,3 +84,32 @@ class SwarmIO:
                 # print(waypoint)
                 f.write("{},{},{},{}\n".format(waypoint[0], waypoint[1], waypoint[2], waypoint[3]))
 
+    def readFormation(self, file_path):
+        formations = []
+        leader = None
+        with open(file_path, 'r') as file:
+            for line in file:
+                parts = line.strip().split(',')
+                if parts[0] == 'formation':
+                    formations.append({
+                        'filename': parts[1],
+                        'time': int(parts[2]),
+                    })
+                elif parts[0] == 'leader':
+                    leader = {
+                        'x': float(parts[1]),
+                        'y': float(parts[2]),
+                    }
+        return formations, leader
+    
+    def read_formation_file(self, file_path):
+        formation = []
+        with open(file_path, 'r') as file:
+            for line in file:
+                parts = line.strip().split(',')
+                formation.append({
+                    'x': float(parts[2]),
+                    'y': float(parts[3]),
+                    'orientation': float(parts[4])
+                })
+        return formation

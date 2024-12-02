@@ -83,14 +83,14 @@ class RRT:
         # Define motion primitives: [distance, angle_change (radians)]
         self.motion_primitives = [
             [self.expand_dis, 0],  # Move forward
-            [self.expand_dis, np.deg2rad(15)],  # 15 degrees left
-            [self.expand_dis, np.deg2rad(-15)],  # 15 degrees right
-            [self.expand_dis, np.deg2rad(30)],  # 30 degrees left
-            [self.expand_dis, np.deg2rad(-30)],  # 30 degrees right
-            [self.expand_dis, np.deg2rad(45)],  # 45 degrees left
-            [self.expand_dis, np.deg2rad(-45)],  # 45 degrees right
-            [self.expand_dis, np.deg2rad(60)],  # 60 degrees left
-            [self.expand_dis, np.deg2rad(-60)],  # 60 degrees right
+            [self.expand_dis, np.deg2rad(10)],  # 15 degrees left
+            [self.expand_dis, np.deg2rad(-10)],  # 15 degrees right
+            [self.expand_dis, np.deg2rad(20)],  # 30 degrees left
+            [self.expand_dis, np.deg2rad(-20)],  # 30 degrees right
+            [self.expand_dis, np.deg2rad(30)],  # 45 degrees left
+            [self.expand_dis, np.deg2rad(-30)],  # 45 degrees right
+            [self.expand_dis, np.deg2rad(40)],  # 60 degrees left
+            [self.expand_dis, np.deg2rad(-40)],  # 60 degrees right
         ]
 
         self.path = None
