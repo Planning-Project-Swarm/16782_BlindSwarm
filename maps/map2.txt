@@ -3,9 +3,19 @@ robot, 2, 16.32, 19.25, 0.52
 robot, 3, 6.59, 17.08, 3.40
 robot, 4, 11.32, 11.32, 0.72
 robot, 5, 8.53, 15.71, 5.50
-robot, 6, 11.41, 4.87, 3.84
+robot, 6, 11.41, 9.87, 1.56
 robot, 7, 17.62, 15.0, 4.72
-robot, 8, 4.5, 7.7, 3.2
+robot, 8, 6.5, 10.7, 1.56
 leader, 20, 20
 formation, formation1, 60
 formation, formation2, 60
+obstacle, 4, 4, 8, 8
+obstacle, 1, 14, 5, 18
+obstacle, 12, 26, 16, 30
+obstacle, 25, 8, 29, 12
+obstacle, 15, 33, 19, 37
+obstacle, 27, 23, 31, 27
+obstacle, 32, 9, 36, 13
+obstacle, 33, 33, 37, 37
+obstacle, 23, 18, 27, 22
+obstacle, 8, 33, 12, 37

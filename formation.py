@@ -35,6 +35,8 @@ if __name__ == "__main__":
 		x, y, orientation = map(float, position)
 		if(formation_timer == 0):
 			cur_formation += 1
+			if(cur_formation >= len(formations)):
+				break
 			formation_file = "formations/" + formations[cur_formation]["filename"].strip() + ".txt"
 			formation_timer = formations[cur_formation]["time"]
 			formation_pos = swarmio.read_formation_file(formation_file)
@@ -50,16 +52,20 @@ if __name__ == "__main__":
 			for obs in obstacles:
 				#print(obs)
 				x1, y1, x2, y2 = obs['x1'], obs['y1'], obs['x2'], obs['y2']
-				if x1 <= goal_x <= x2 and y1 <= goal_y <= y2:
-					# Adjust the position to minimize least-squares distance
-					if goal_x > x1:
-						goal_x = x1 - 0.5
-					elif goal_x < x2:
-						goal_x = x2 + 0.5
-					if goal_y > y1:
-						goal_y = y1 - 0.5
-					elif goal_y < y2:
-						goal_y = y2 + 0.5
+				if x1 - 1 <= goal_x <= x2 + 1 and y1 - 1 <= goal_y <= y2 + 1:
+					# Adjust the position to minimize least-squares distance by projecting to the nearest edge
+					dx1, dx2 = abs(goal_x - x1), abs(goal_x - x2)
+					dy1, dy2 = abs(goal_y - y1), abs(goal_y - y2)
+					min_dist = min(dx1, dx2, dy1, dy2)
+					
+					if min_dist == dx1:
+						goal_x = x1 - 1
+					elif min_dist == dx2:
+						goal_x = x2 + 1
+					elif min_dist == dy1:
+						goal_y = y1 - 1
+					else:
+						goal_y = y2 + 1
 			
 			goals.append({
 				'id': temp_id,
@@ -92,7 +98,7 @@ if __name__ == "__main__":
 					'orientation': robots[robot-1]['orientation']
 				})
 	
-	output.append(frame)
+		output.append(frame)
 	
 	#hack the visualizer to visualize each frame
 	vis = Visualizer([0, 40], obstacles)

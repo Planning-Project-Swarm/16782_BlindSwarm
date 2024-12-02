@@ -7,7 +7,7 @@ from swarm_io import SwarmIO
 
 class Visualizer:
     def __init__(self):
-        """Initialize thWe Visualizer without storing area and obstacles."""
+        """Initialize the Visualizer without storing area and obstacles."""
         pass
 
     def viz_paths(self, paths, area, obstacles, robot_radius, save_animation=False, output_file="cbs_visualization.mp4"):
