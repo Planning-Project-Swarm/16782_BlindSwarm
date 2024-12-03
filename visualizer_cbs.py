@@ -140,7 +140,7 @@ class Visualizer:
 
         # Initialize paths and handles
         path_lines = {}
-        start_points = {}
+        # start_points = {}
         end_points = {}
         orientation_arrows = {}
         robot_circles = {}
@@ -149,14 +149,14 @@ class Visualizer:
         for path_id, path in paths.items():
             # Assign color to path line
             path_lines[path_id], = ax.plot([], [], '-o', label=f"Robot {path_id}")
-            start_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
+            # start_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
             end_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
             robot_circles[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.8)
             # leader_points[path_id] = Ellipse((0, 0), robot_radius, robot_radius/2.0, color=(0.1, 0.2, 0.5), alpha=1.0)
-            leader_points[path_id] = plt.Circle((0, 0), robot_radius, color=(0.1, 0.2, 0.5), alpha=1.0)
+            leader_points[path_id] = plt.Circle((0, 0), robot_radius/4, color=(0.1, 0.2, 0.5), alpha=1.0)
 
             # Add circles to the plot
-            ax.add_patch(start_points[path_id])
+            # ax.add_patch(start_points[path_id])
             ax.add_patch(end_points[path_id])
             ax.add_patch(robot_circles[path_id])
             ax.add_patch(leader_points[path_id])
@@ -177,7 +177,7 @@ class Visualizer:
                     # path_lines[path_id].set_data(x_coords, y_coords)
 
                     # Update start point
-                    start_points[path_id].center = (path[0][0], path[0][1])
+                    # start_points[path_id].center = (path[0][0], path[0][1])
 
                     # Update end point
                     end_points[path_id].center = (goals[path_id][frame][0], goals[path_id][frame][1])
@@ -206,8 +206,7 @@ class Visualizer:
             time_text.set_text(f"Time: {current_time:.1f}")
             # return list(path_lines.values()) + list(start_points.values()) + list(end_points.values()) + \
                             # list(orientation_arrows.values()) + list(robot_circles.values()) + list(leader_points.values()) + [time_text]
-            return list(start_points.values()) + list(end_points.values()) + \
-                    list(orientation_arrows.values()) + list(robot_circles.values()) + list(leader_points.values()) + [time_text]
+            return list(end_points.values()) + list(orientation_arrows.values()) + list(robot_circles.values()) + list(leader_points.values()) + [time_text]
 
         # Determine the maximum length of all paths
         max_frames = max(len(path) for path in paths.values())
