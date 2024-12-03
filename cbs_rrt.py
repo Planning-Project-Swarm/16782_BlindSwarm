@@ -130,11 +130,11 @@ class CBS:
                     self.paths[robot_id] = rrt.path
 
             # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_conflict_viz_{}.mp4".format(i))
-            #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
+            # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
 
 
         # visualize the final result
-        viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False)
+        # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False)
         # save final result as mp4
         #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_final_viz.mp4")
 

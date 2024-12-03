@@ -119,6 +119,115 @@ class Visualizer:
             plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
             plt.show()
 
+    def viz_formations(self, paths, goals, leaders, area, obstacles, robot_radius, save_animation=False, output_file="cbs_visualization.mp4"):
+
+        # Set a larger figure size for better visibility
+        fig, ax = plt.subplots(figsize=(10, 8))  # Adjust size for better detail
+
+        # Plot the area boundary
+        ax.plot([area[0], area[1], area[1], area[0], area[0]],
+                [area[2], area[2], area[3], area[3], area[2]], "-k")
+        ax.set_xlim(area[0] - 1, area[1] + 1)
+        ax.set_ylim(area[2] - 1, area[3] + 1)
+        ax.set_aspect('equal', adjustable='box')
+        ax.grid(True)
+
+        # Plot obstacles
+        for obs in obstacles:
+            rect_x = [obs['x1'], obs['x2'], obs['x2'], obs['x1'], obs['x1']]
+            rect_y = [obs['y1'], obs['y1'], obs['y2'], obs['y2'], obs['y1']]
+            ax.fill(rect_x, rect_y, "gray")
+
+        # Initialize paths and handles
+        path_lines = {}
+        start_points = {}
+        end_points = {}
+        orientation_arrows = {}
+        robot_circles = {}
+        leader_points = {}
+
+        for path_id, path in paths.items():
+            # Assign color to path line
+            path_lines[path_id], = ax.plot([], [], '-o', label=f"Robot {path_id}")
+            start_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
+            end_points[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.5)
+            robot_circles[path_id] = plt.Circle((0, 0), robot_radius, color=path_lines[path_id].get_color(), alpha=0.8)
+            # leader_points[path_id] = Ellipse((0, 0), robot_radius, robot_radius/2.0, color=(0.1, 0.2, 0.5), alpha=1.0)
+            leader_points[path_id] = plt.Circle((0, 0), robot_radius, color=(0.1, 0.2, 0.5), alpha=1.0)
+
+            # Add circles to the plot
+            ax.add_patch(start_points[path_id])
+            ax.add_patch(end_points[path_id])
+            ax.add_patch(robot_circles[path_id])
+            ax.add_patch(leader_points[path_id])
+
+            orientation_arrows[path_id] = None  # Placeholder for arrows
+
+        # Add text for displaying current time
+        time_text = ax.text(0.05, 0.95, '', transform=ax.transAxes, fontsize=12, verticalalignment='top')
+
+        def update(frame):
+            for path_id, path in paths.items():
+                if len(path) > frame:
+                    x_coords = [point[0] for point in path[:frame + 1]]
+                    y_coords = [point[1] for point in path[:frame + 1]]
+                    theta = [point[2] for point in path[:frame + 1]]  # Get orientations up to the current frame
+
+                    # Update path lines
+                    # path_lines[path_id].set_data(x_coords, y_coords)
+
+                    # Update start point
+                    start_points[path_id].center = (path[0][0], path[0][1])
+
+                    # Update end point
+                    end_points[path_id].center = (goals[path_id][frame][0], goals[path_id][frame][1])
+
+                    # Update robot circle for current position
+                    robot_circles[path_id].center = (path[frame][0], path[frame][1])
+
+                    # Draw an arrow for the last/current position at this frame
+                    current_x, current_y, current_theta = path[frame][0], path[frame][1], path[frame][2]
+                    if orientation_arrows[path_id]:
+                        orientation_arrows[path_id].remove()  # Remove the previous arrow
+                    orientation_arrows[path_id] = ax.arrow(
+                        current_x, current_y,  # Start position of the arrow
+                        robot_radius * math.cos(current_theta),  # X-component of arrow length
+                        robot_radius * math.sin(current_theta),  # Y-component of arrow length
+                        head_length=robot_radius,  # Length of the arrowhead
+                        head_width=robot_radius,  # Width of the arrowhead
+                        color=path_lines[path_id].get_color(),  # Match arrow color to the path
+                        alpha=0.8
+                    )
+
+                    leader_points[path_id].center = (leaders[frame][0], leaders[frame][1])
+
+            # Update time text
+            current_time = frame
+            time_text.set_text(f"Time: {current_time:.1f}")
+            # return list(path_lines.values()) + list(start_points.values()) + list(end_points.values()) + \
+                            # list(orientation_arrows.values()) + list(robot_circles.values()) + list(leader_points.values()) + [time_text]
+            return list(start_points.values()) + list(end_points.values()) + \
+                    list(orientation_arrows.values()) + list(robot_circles.values()) + list(leader_points.values()) + [time_text]
+
+        # Determine the maximum length of all paths
+        max_frames = max(len(path) for path in paths.values())
+
+        # Create the animation
+        ani = animation.FuncAnimation(fig, update, frames=max_frames, blit=True)
+
+        # Adjust layout and save animation
+        if save_animation:
+            print(f"Saving video as {output_file}...")
+            plt.legend(loc='center left', bbox_to_anchor=(1.05, 0.5), fontsize=10)  # Move legend closer
+            plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
+            ani.save(output_file, writer='ffmpeg', fps=5, dpi=200)  # Higher resolution for details
+            print(f"Video saved as {output_file}")
+        else:
+            plt.legend(loc='center left', bbox_to_anchor=(1.05, 0.5), fontsize=10)  # Move legend closer
+            plt.subplots_adjust(left=0.1, right=0.85)  # Adjust plot area for legend
+            plt.show()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Visualize paths of robots on a map.")
     parser.add_argument('map_file', type=str, help="Name of the input map file (located in 'maps' folder).")

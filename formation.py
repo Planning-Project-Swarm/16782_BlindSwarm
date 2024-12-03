@@ -1,56 +1,79 @@
 import argparse
+import os
 from swarm_io import SwarmIO
 from visualizer_cbs import Visualizer
 from cbs_rrt import CBS
 
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description="Process map and plan files.")
-	parser.add_argument('--map', type=str, required=True, help='Path to the map file')
-	parser.add_argument('--plan', type=str, required=True, help='Path to the plan file')
+def main():
+	parser = argparse.ArgumentParser(description="Process map and leader plan files.")
+	parser.add_argument('map_file', type=str, help='Path to the map file')
+	parser.add_argument('leader_plan_file', type=str, help='Path to the leader plan file')
+	parser.add_argument('formations_folder', type=str, help='Path to the formations folder')
 	args = parser.parse_args()
 	
-	map_file = "maps/" + args.map
-	plan_file = "plans/" + args.plan
+	map_file = os.path.join("maps/", args.map_file)
+	plan_file = os.path.join("plans/", args.leader_plan_file)
 	
-	print(f"Map file: {map_file}")
-	print(f"Plan file: {plan_file}")
+	# print(f"Map file: {map_file}")
+	# print(f"Plan file: {plan_file}")
 	
 	swarmio = SwarmIO()
     
 	robots, _, obstacles = swarmio.read_map_file(map_file)
-	formations, leader = swarmio.readFormation(map_file) #to allow backwards compat
+	# formation_infos: formation name and time
+	formation_infos, leader = swarmio.readFormation(map_file) # to allow backwards compat
 	
+	# leader's plan
 	with open(plan_file, 'r') as file:
 		plan_lines = [line.strip().split(',') for line in file.readlines() if line.strip()]
 	
-	goals = []
-	cur_formation = 0
-	formation_timer = formations[0]["time"]
-	formation_file = "formations/" + formations[0]["filename"].strip() + ".txt"
-	formation_pos = swarmio.read_formation_file(formation_file)
-	
-	output = []
-	cur_pos = 0;
-	for position in plan_lines:
-		x, y, orientation = map(float, position)
-		if(formation_timer == 0):
-			cur_formation += 1
-			if(cur_formation >= len(formations)):
-				break
-			formation_file = "formations/" + formations[cur_formation]["filename"].strip() + ".txt"
-			formation_timer = formations[cur_formation]["time"]
-			formation_pos = swarmio.read_formation_file(formation_file)
-		
+	# A dict of dict to store formation timestep, formation name and poses
+	formations = dict()
+
+	for formation_info in formation_infos:
+		file_name = formation_info['filename']
+		formation_t = formation_info['time']
+		# print(file_name, formation_t)
+		formation_name = file_name.strip()
+		formation_file = os.path.join(args.formations_folder, formation_name + ".txt")
+		formation_pos = swarmio.read_formation_file(formation_file)
+		formations[formation_t] = {"name": formation_name, "pos": formation_pos}
+
+	# print(formation_poses)
+
+	output = {robot['id']: [] for robot in robots}
+	# print(output)
+	output_goals = {robot['id']: [] for robot in robots}
+
+	# lc = 0
+	robot_r = 0.5
+	rand_area = [0, 40]
+	leader_poses = []
+
+	for leader_plan_line in plan_lines:
+
+		# if lc == 5:
+		# 	break
+		# lc += 1
+
+		x, y, orientation, t = map(float, leader_plan_line)
+		leader_poses.append([x, y, orientation, t])
+
+		if formations.get(t):
+			# update formation
+			print("Formation changed")
+			cur_formation = formations[t]
+
 		goals = []
-		temp_id = 1
-		for formation in formation_pos:
-			print(formation)
-			goal_x = x + formation['x']
-			goal_y = y + formation['y']
+		# print(cur_formation['name'])
+		for robot_id, pos in enumerate(cur_formation['pos'], start=1):
+
+			goal_x = x + pos['x']
+			goal_y = y + pos['y']
 			
 			# Check if the goal position falls within any obstacle
 			for obs in obstacles:
-				#print(obs)
+				# print(obs)
 				x1, y1, x2, y2 = obs['x1'], obs['y1'], obs['x2'], obs['y2']
 				if x1 - 1 <= goal_x <= x2 + 1 and y1 - 1 <= goal_y <= y2 + 1:
 					# Adjust the position to minimize least-squares distance by projecting to the nearest edge
@@ -68,42 +91,54 @@ if __name__ == "__main__":
 						goal_y = y2 + 1
 			
 			goals.append({
-				'id': temp_id,
+				'id': robot_id,
 				'x': goal_x,
 				'y': goal_y,
 				'orientation': orientation
 			})
-			temp_id += 1
-		print(goals)
-		solver = CBS(robots, goals, obstacles, [0, 40])
-		solver.planning() #generate set of solutions for the current state
-		
-		formation_timer -= 1
+			output_goals[robot_id].append([goal_x, goal_y, orientation, t])
 
-		# Visualize the current frame
-		frame = {
-			'leader': position,
-			'robots': []
-		}
-		print(solver.paths)
+		# print(goals)
+		solver = CBS(robots, goals, obstacles, rand_area, robot_r)
+		solver.planning() # Generate set of solutions for the current state
+		
+		# save the data of current frame
+		# frame = {
+		# 	'leader': leader_pose,
+		# 	'robots': []
+		# }
+		# print(solver.paths)
 		for robot in solver.paths:
-			if(solver.paths[robot][1]):
-				robots[robot-1]['x'] = solver.paths[robot][1][0]
-				robots[robot-1]['y'] = solver.paths[robot][1][1]
-				robots[robot-1]['orientation'] = solver.paths[robot][1][2]
-				frame['robots'].append({
-					'id': robot,
-					'x': robots[robot-1]['x'],
-					'y': robots[robot-1]['y'],
-					'orientation': robots[robot-1]['orientation']
-				})
+			# maybe can remove this check since if not found, it will stay in current position
+			# if(solver.paths[robot][1]):
+
+			# update robot pose
+			robots[robot-1]['x'] = solver.paths[robot][1][0]
+			robots[robot-1]['y'] = solver.paths[robot][1][1]
+			robots[robot-1]['orientation'] = solver.paths[robot][1][2]
+
+			# frame['robots'].append({
+			# 	'id': robot,
+			# 	'x': robots[robot-1]['x'],
+			# 	'y': robots[robot-1]['y'],
+			# 	'orientation': robots[robot-1]['orientation']
+			# })
+
+			output[robot].append([solver.paths[robot][1][0], solver.paths[robot][1][1], solver.paths[robot][1][2], t])
+
 	
-		output.append(frame)
-	
+	# print("=======_____=++++++_()()*&^(*&^%$&^*())_")
+	# print(output)
+
 	#hack the visualizer to visualize each frame
-	vis = Visualizer([0, 40], obstacles)
-	for frame in output:
-		# Update positions for visualization
-		robot_positions = [(robot['x'], robot['y'], robot['orientation']) for robot in frame['robots']]
-		leader_pos = (frame['leader'][0], frame['leader'][1], 0)  # Assuming leader orientation is 0
-		vis.update(robot_positions, leader_pos)
+	vis = Visualizer()
+	# vis.viz_paths(output, rand_area * 2, obstacles, robot_r, save_animation=False)
+	# vis.viz_paths(output, rand_area * 2, obstacles, robot_r, save_animation=True, output_file="cbs_formation_viz.mp4")
+	# print(output_goals)
+	# print(leader_poses)
+	vis.viz_formations(output, output_goals, leader_poses, rand_area * 2, obstacles, robot_r, save_animation=False)
+	vis.viz_formations(output, output_goals, leader_poses, rand_area * 2, obstacles, robot_r, save_animation=True, output_file="cbs_formation_viz.mp4")
+
+
+if __name__ == "__main__":
+	main()

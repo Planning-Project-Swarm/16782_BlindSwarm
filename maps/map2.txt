@@ -7,8 +7,8 @@ robot, 6, 11.41, 9.87, 1.56
 robot, 7, 17.62, 15.0, 4.72
 robot, 8, 6.5, 10.7, 1.56
 leader, 20, 20
-formation, formation1, 60
-formation, formation2, 60
+formation, formation1, 0.0
+formation, formation2, 80.0
 obstacle, 4, 4, 8, 8
 obstacle, 1, 14, 5, 18
 obstacle, 12, 26, 16, 30

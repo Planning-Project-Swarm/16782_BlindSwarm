@@ -93,7 +93,7 @@ class SwarmIO:
                 if parts[0] == 'formation':
                     formations.append({
                         'filename': parts[1],
-                        'time': int(parts[2]),
+                        'time': float(parts[2]),
                     })
                 elif parts[0] == 'leader':
                     leader = {
