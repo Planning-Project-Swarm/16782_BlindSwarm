@@ -11,7 +11,7 @@ formation, formation1, 0.0
 formation, formation2, 80.0
 obstacle, 4, 4, 8, 8
 obstacle, 1, 14, 5, 18
-obstacle, 12, 26, 16, 30
+obstacle, 12, 22, 16, 26
 obstacle, 25, 8, 29, 12
 obstacle, 15, 33, 19, 37
 obstacle, 27, 23, 31, 27

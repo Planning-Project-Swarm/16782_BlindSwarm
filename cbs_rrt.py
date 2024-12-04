@@ -46,7 +46,7 @@ class CBS:
 
                         # Check if the robots are within collision distance
                         # using 1.8 instead of 2 to allow for some buffer
-                        if math.hypot(x1 - x2, y1 - y2) <=  2.5 * robot_radius:
+                        if math.hypot(x1 - x2, y1 - y2) <=  1.8 * robot_radius:
                             print("\033[93m[WARN]\033[0m Conflict detected: robot {} and robot {} at time {}".format(r1_id, r2_id, t))
                             conflicts[r1_id].append((r2_id, t))
                             conflicts[r2_id].append((r1_id, t))
@@ -103,7 +103,32 @@ class CBS:
             conflicts = detect_conflicts(self.paths, self.robot_radius)
             if(i == self.max_attempts_to_resolve_conflicts - 1):
                 print("\033[91m[ERROR]\033[0m Max attempts to resolve conflicts reached")
-                #TODO: Fix here!
+                # Sort robots by number of conflicts
+                removed = []
+                while conflicts:
+                    conflict_count = {}
+                    print(conflicts.items())
+                    for robot_id, conflictList in conflicts.items():
+                        if(robot_id not in conflict_count):
+                            conflict_count[robot_id] = len(conflictList)
+                        for(t, _) in conflictList:
+                            if t not in conflict_count:
+                                conflict_count[t] = 1
+                            else:
+                                conflict_count[t] += 1
+                    print(conflict_count)
+                    sorted_conflicts = sorted(conflict_count, key=conflict_count.get, reverse=True)
+                    if(sorted_conflicts[0] in removed):
+                        sorted_conflicts = sorted_conflicts[1:]
+                    if(len(sorted_conflicts) == 0):
+                        break
+                    print(sorted_conflicts[0])
+                    robot = self.robots[sorted_conflicts[0] - 1]
+                    self.paths[sorted_conflicts[0]] = [[robot['x'], robot['y'], robot['orientation'], 0],[robot['x'], robot['y'], robot['orientation'], 1]]
+                    print("Freezing robot ", sorted_conflicts[0])
+                    removed.append(sorted_conflicts[0])
+                    conflicts = detect_conflicts(self.paths, self.robot_radius)
+                    print(conflicts)
                 break
             
             if not conflicts:

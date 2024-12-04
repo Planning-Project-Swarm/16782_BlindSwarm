@@ -101,6 +101,7 @@ def main():
 		# print(goals)
 		solver = CBS(robots, goals, obstacles, rand_area, robot_r)
 		solver.planning() # Generate set of solutions for the current state
+		print(x, y, orientation, t)
 		
 		# save the data of current frame
 		# frame = {
