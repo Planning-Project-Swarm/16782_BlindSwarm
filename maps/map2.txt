@@ -18,4 +18,4 @@ obstacle, 27, 19, 31, 23
 obstacle, 32, 9, 36, 13
 obstacle, 33, 33, 37, 37
 obstacle, 23, 18, 27, 22
-obstacle, 8, 33, 12, 37
+obstacle, 8, 35, 12, 38

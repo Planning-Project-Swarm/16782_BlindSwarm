@@ -47,7 +47,7 @@ class RRT:
                  max_iter=2000,  # Increased to allow more iterations
                  play_area=None,
                  robot_radius=0.5,
-                 random_seed=7
+                 random_seed=9
                  ):
         """
         Setting Parameter
@@ -83,14 +83,14 @@ class RRT:
         # Define motion primitives: [distance, angle_change (radians)]
         self.motion_primitives = [
             [self.expand_dis, 0],  # Move forward
-            [self.expand_dis, np.deg2rad(15)],  # 15 degrees left
-            [self.expand_dis, np.deg2rad(-15)],  # 15 degrees right
-            [self.expand_dis, np.deg2rad(30)],  # 30 degrees left
-            [self.expand_dis, np.deg2rad(-30)],  # 30 degrees right
-            [self.expand_dis, np.deg2rad(45)],  # 45 degrees left
-            [self.expand_dis, np.deg2rad(-45)],  # 45 degrees right
-            [self.expand_dis, np.deg2rad(60)],  # 60 degrees left
-            [self.expand_dis, np.deg2rad(-60)],  # 60 degrees right
+            [self.expand_dis, np.deg2rad(12)],  # 15 degrees left
+            [self.expand_dis, np.deg2rad(-12)],  # 15 degrees right
+            [self.expand_dis, np.deg2rad(24)],  # 30 degrees left
+            [self.expand_dis, np.deg2rad(-24)],  # 30 degrees right
+            [self.expand_dis, np.deg2rad(36)],  # 45 degrees left
+            [self.expand_dis, np.deg2rad(-36)],  # 45 degrees right
+            [self.expand_dis, np.deg2rad(48)],  # 60 degrees left
+            [self.expand_dis, np.deg2rad(-48)],  # 60 degrees right
         ]
 
         self.path = None
