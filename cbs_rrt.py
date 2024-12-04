@@ -46,7 +46,7 @@ class CBS:
 
                         # Check if the robots are within collision distance
                         # using 1.8 instead of 2 to allow for some buffer
-                        if math.hypot(x1 - x2, y1 - y2) <= 1.8 * robot_radius:
+                        if math.hypot(x1 - x2, y1 - y2) <=  2.5 * robot_radius:
                             print("\033[93m[WARN]\033[0m Conflict detected: robot {} and robot {} at time {}".format(r1_id, r2_id, t))
                             conflicts[r1_id].append((r2_id, t))
                             conflicts[r2_id].append((r1_id, t))
@@ -125,16 +125,17 @@ class CBS:
                 rrt.planning(animation=False, constraints=constraint_path)
                 if rrt.path is None:
                     print("\033[91m[ERROR]\033[0m Cannot find path for robot", robot_id)
+                    self.paths[robot_id] = [[robot['x'], robot['y'], robot['orientation'], 0],[robot['x'], robot['y'], robot['orientation'], 1]]
                 else:
                     print("Found path for robot ", robot_id)
                     self.paths[robot_id] = rrt.path
 
             # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_conflict_viz_{}.mp4".format(i))
-            # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
+            #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
 
 
         # visualize the final result
-        # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False)
+        #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False)
         # save final result as mp4
         #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_final_viz.mp4")
 
