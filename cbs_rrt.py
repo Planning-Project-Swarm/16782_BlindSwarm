@@ -46,7 +46,7 @@ class CBS:
 
                         # Check if the robots are within collision distance
                         # using 1.8 instead of 2 to allow for some buffer
-                        if math.hypot(x1 - x2, y1 - y2) <=  1.8 * robot_radius:
+                        if math.hypot(x1 - x2, y1 - y2) <=  2 * robot_radius:
                             print("\033[93m[WARN]\033[0m Conflict detected: robot {} and robot {} at time {}".format(r1_id, r2_id, t))
                             conflicts[r1_id].append((r2_id, t))
                             conflicts[r2_id].append((r1_id, t))
@@ -99,13 +99,14 @@ class CBS:
 
 
         # detect and resolve conflicts
-        for i in range(self.max_attempts_to_resolve_conflicts):
+        i = 0
+        removed = []
+        while i < self.max_attempts_to_resolve_conflicts:
             conflicts = detect_conflicts(self.paths, self.robot_radius)
-            if(i == self.max_attempts_to_resolve_conflicts - 1):
+            if(i == self.max_attempts_to_resolve_conflicts - 2):
                 print("\033[91m[ERROR]\033[0m Max attempts to resolve conflicts reached")
                 # Sort robots by number of conflicts
-                removed = []
-                while conflicts:
+                if conflicts:
                     conflict_count = {}
                     print(conflicts.items())
                     for robot_id, conflictList in conflicts.items():
@@ -118,19 +119,22 @@ class CBS:
                                 conflict_count[t] += 1
                     print(conflict_count)
                     sorted_conflicts = sorted(conflict_count, key=conflict_count.get, reverse=True)
-                    if(sorted_conflicts[0] in removed):
+                    while(len(sorted_conflicts) > 0 and sorted_conflicts[0] in removed):
                         sorted_conflicts = sorted_conflicts[1:]
                     if(len(sorted_conflicts) == 0):
                         break
                     print(sorted_conflicts[0])
                     robot = self.robots[sorted_conflicts[0] - 1]
-                    self.paths[sorted_conflicts[0]] = [[robot['x'], robot['y'], robot['orientation'], 0],[robot['x'], robot['y'], robot['orientation'], 1]]
-                    print("Freezing robot ", sorted_conflicts[0])
+                    self.paths[sorted_conflicts[0]] = self.paths[sorted_conflicts[0]][:2]
+                    print("Discretizing robot: ", sorted_conflicts[0])
                     removed.append(sorted_conflicts[0])
                     conflicts = detect_conflicts(self.paths, self.robot_radius)
+                    if(sorted_conflicts[0] in conflicts):
+                        self.paths[sorted_conflicts[0]] = [[robot['x'], robot['y'], robot['orientation'], 0],[robot['x'], robot['y'], robot['orientation'], 1]]
+                        conflicts = detect_conflicts(self.paths, self.robot_radius)
                     print(conflicts)
-                break
-            
+                    i -= 5
+
             if not conflicts:
                 print("\033[92mNo conflicts found\033[0m")
                 break
@@ -140,6 +144,8 @@ class CBS:
             # print(constraints)
             # constraint_path is a list of x, y
             for robot_id, constraint_path in constraints.items():
+                if(robot_id in removed):
+                    continue
                 print("Replanning robot ", robot_id)
                 robot = next(r for r in self.robots if r['id'] == robot_id)
                 goal = next(g for g in self.goals if g['id'] == robot_id)
@@ -162,6 +168,7 @@ class CBS:
 
             # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_conflict_viz_{}.mp4".format(i))
             #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
+            i+=1
 
 
         # visualize the final result
