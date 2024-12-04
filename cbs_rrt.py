@@ -14,7 +14,7 @@ class CBS:
                  obstacle_list,
                  rand_area,
                  robot_radius=0.5,
-                 max_attempts_to_resolve_conflicts = 10
+                 max_attempts_to_resolve_conflicts = 15
                  ):
         self.robots = starts
         self.goals = goals
@@ -101,6 +101,11 @@ class CBS:
         # detect and resolve conflicts
         for i in range(self.max_attempts_to_resolve_conflicts):
             conflicts = detect_conflicts(self.paths, self.robot_radius)
+            if(i == self.max_attempts_to_resolve_conflicts - 1):
+                print("\033[91m[ERROR]\033[0m Max attempts to resolve conflicts reached")
+                #TODO: Fix here!
+                break
+            
             if not conflicts:
                 print("\033[92mNo conflicts found\033[0m")
                 break
