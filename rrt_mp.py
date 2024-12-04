@@ -287,7 +287,7 @@ class RRT:
             if abs(node.t - ct) < self.dt:
                 # Check if the node is too close to the constraint
                 # Set a threshold of 1.1 * robot_radius to allow some buffer
-                if math.hypot(node.x - cx, node.y - cy) < 1.1 * self.robot_radius:
+                if math.hypot(node.x - cx, node.y - cy) < self.robot_radius:
                     return False
         return True
 
@@ -297,10 +297,10 @@ class RRT:
 
         for obs in obstacleList:
             rect = {
-                'x_min': min(obs['x1'], obs['x2']) - robot_radius,
-                'x_max': max(obs['x1'], obs['x2']) + robot_radius,
-                'y_min': min(obs['y1'], obs['y2']) - robot_radius,
-                'y_max': max(obs['y1'], obs['y2']) + robot_radius
+                'x_min': min(obs['x1'], obs['x2']) - robot_radius *1.3,
+                'x_max': max(obs['x1'], obs['x2']) + robot_radius *1.3,
+                'y_min': min(obs['y1'], obs['y2']) - robot_radius *1.3,
+                'y_max': max(obs['y1'], obs['y2']) + robot_radius *1.3
             }
 
             for i in range(len(node.path_x) - 1):
