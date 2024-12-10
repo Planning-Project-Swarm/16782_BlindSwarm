@@ -13,9 +13,11 @@ def main():
 	
 	map_file = os.path.join("maps/", args.map_file)
 	plan_file = os.path.join("plans/", args.leader_plan_file)
-	
-	# print(f"Map file: {map_file}")
-	# print(f"Plan file: {plan_file}")
+
+	output_folder = "output/"
+	base_name = os.path.splitext(os.path.basename(args.map_file))[0]
+	output_file = os.path.join(output_folder, f"{base_name}_formations_output.txt")
+	output_viz_file = os.path.join(output_folder, "cbs_formation_viz.mp4")
 	
 	swarmio = SwarmIO()
     
@@ -39,22 +41,14 @@ def main():
 		formation_pos = swarmio.read_formation_file(formation_file)
 		formations[formation_t] = {"name": formation_name, "pos": formation_pos}
 
-	# print(formation_poses)
-
 	output = {robot['id']: [] for robot in robots}
-	# print(output)
 	output_goals = {robot['id']: [] for robot in robots}
 
-	# lc = 0
 	robot_r = 0.5
 	rand_area = [0, 40]
 	leader_poses = []
 
 	for leader_plan_line in plan_lines:
-
-		# if lc == 5:
-		# 	break
-		# lc += 1
 
 		x, y, orientation, t = map(float, leader_plan_line)
 		leader_poses.append([x, y, orientation, t])
@@ -103,42 +97,24 @@ def main():
 		solver.planning() # Generate set of solutions for the current state
 		print(x, y, orientation, t)
 		
-		# save the data of current frame
-		# frame = {
-		# 	'leader': leader_pose,
-		# 	'robots': []
-		# }
-		# print(solver.paths)
 		for robot in solver.paths:
-			# maybe can remove this check since if not found, it will stay in current position
-			# if(solver.paths[robot][1]):
 
 			# update robot pose
 			robots[robot-1]['x'] = solver.paths[robot][1][0]
 			robots[robot-1]['y'] = solver.paths[robot][1][1]
 			robots[robot-1]['orientation'] = solver.paths[robot][1][2]
-
-			# frame['robots'].append({
-			# 	'id': robot,
-			# 	'x': robots[robot-1]['x'],
-			# 	'y': robots[robot-1]['y'],
-			# 	'orientation': robots[robot-1]['orientation']
-			# })
-
 			output[robot].append([solver.paths[robot][1][0], solver.paths[robot][1][1], solver.paths[robot][1][2], t])
 
 	
-	# print("=======_____=++++++_()()*&^(*&^%$&^*())_")
 	# print(output)
+
+	# save the output to file
+	swarmio.write_cbs_output_file(output, output_file)
 
 	#hack the visualizer to visualize each frame
 	vis = Visualizer()
-	# vis.viz_paths(output, rand_area * 2, obstacles, robot_r, save_animation=False)
-	# vis.viz_paths(output, rand_area * 2, obstacles, robot_r, save_animation=True, output_file="cbs_formation_viz.mp4")
-	# print(output_goals)
-	# print(leader_poses)
 	vis.viz_formations(output, output_goals, leader_poses, rand_area * 2, obstacles, robot_r, save_animation=False)
-	vis.viz_formations(output, output_goals, leader_poses, rand_area * 2, obstacles, robot_r, save_animation=True, output_file="cbs_formation_viz.mp4")
+	vis.viz_formations(output, output_goals, leader_poses, rand_area * 2, obstacles, robot_r, save_animation=True, output_file=output_viz_file)
 
 
 if __name__ == "__main__":

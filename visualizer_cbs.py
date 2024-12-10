@@ -243,6 +243,11 @@ def main():
     if not os.path.exists(plan_file_path):
         raise FileNotFoundError(f"Plan file '{plan_file_path}' not found.")
 
+    output_folder = "output"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    output_file = os.path.join(output_folder, "cbs_visualization.mp4")
+
     swarm_io = SwarmIO()
 
     robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
@@ -254,8 +259,8 @@ def main():
 
     # Initialize the Visualizer and create the video
     visualizer = Visualizer()
-    visualizer.viz_paths(paths, area, obstacles, robot_radius, save_animation=False, output_file="cbs_visualization.mp4")
-    visualizer.viz_paths(paths, area, obstacles, robot_radius, save_animation=True, output_file="cbs_visualization.mp4")
+    visualizer.viz_paths(paths, area, obstacles, robot_radius, save_animation=False, output_file=output_file)
+    visualizer.viz_paths(paths, area, obstacles, robot_radius, save_animation=True, output_file=output_file)
 
 
 if __name__ == "__main__":

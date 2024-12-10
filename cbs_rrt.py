@@ -108,7 +108,6 @@ class CBS:
                 # Sort robots by number of conflicts
                 if conflicts:
                     conflict_count = {}
-                    print(conflicts.items())
                     for robot_id, conflictList in conflicts.items():
                         if(robot_id not in conflict_count):
                             conflict_count[robot_id] = len(conflictList)
@@ -117,22 +116,20 @@ class CBS:
                                 conflict_count[t] = 1
                             else:
                                 conflict_count[t] += 1
-                    print(conflict_count)
                     sorted_conflicts = sorted(conflict_count, key=conflict_count.get, reverse=True)
                     while(len(sorted_conflicts) > 0 and sorted_conflicts[0] in removed):
                         sorted_conflicts = sorted_conflicts[1:]
                     if(len(sorted_conflicts) == 0):
                         break
-                    print(sorted_conflicts[0])
                     robot = self.robots[sorted_conflicts[0] - 1]
                     self.paths[sorted_conflicts[0]] = self.paths[sorted_conflicts[0]][:2]
-                    print("Discretizing robot: ", sorted_conflicts[0])
+                    # print("Discretizing robot: ", sorted_conflicts[0])
                     removed.append(sorted_conflicts[0])
                     conflicts = detect_conflicts(self.paths, self.robot_radius)
                     if(sorted_conflicts[0] in conflicts):
                         self.paths[sorted_conflicts[0]] = [[robot['x'], robot['y'], robot['orientation'], 0],[robot['x'], robot['y'], robot['orientation'], 1]]
                         conflicts = detect_conflicts(self.paths, self.robot_radius)
-                    print(conflicts)
+                    # print(conflicts)
                     i -= 5
 
             if not conflicts:
@@ -166,15 +163,16 @@ class CBS:
                     print("Found path for robot ", robot_id)
                     self.paths[robot_id] = rrt.path
 
+            # visualize the interim result
             # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_conflict_viz_{}.mp4".format(i))
-            #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
+            # save final interim as mp4
+            # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False) #uncomment to get back the individual visualization
             i+=1
 
-
         # visualize the final result
-        #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False)
+        # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, False)
         # save final result as mp4
-        #viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_final_viz.mp4")
+        # viz.viz_paths(self.paths, self.rand_area * 2, self.obstacles, self.robot_radius, True, "cbs_final_viz.mp4")
 
 def main():
     parser = argparse.ArgumentParser(description="Run CBS for a single map file.")
