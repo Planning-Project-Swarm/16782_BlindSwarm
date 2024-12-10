@@ -95,7 +95,7 @@ def main():
 		# print(goals)
 		solver = CBS(robots, goals, obstacles, rand_area, robot_r)
 		solver.planning() # Generate set of solutions for the current state
-		print(x, y, orientation, t)
+		# print(x, y, orientation, t)
 		
 		for robot in solver.paths:
 
