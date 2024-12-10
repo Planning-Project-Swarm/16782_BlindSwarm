@@ -378,6 +378,12 @@ def main():
     if not os.path.exists(map_file_path):
         raise FileNotFoundError(f"Map file '{map_file_path}' not found.")
     
+    output_folder = "output"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    base_name = os.path.splitext(os.path.basename(args.map_file))[0]
+    output_file = os.path.join(output_folder, f"{base_name}_output.txt")
+    
     swarm_io = SwarmIO()
     robots, goals, obstacles = swarm_io.read_map_file(map_file_path)
 
@@ -402,7 +408,7 @@ def main():
         print("\033[91m[ERROR]\033[0m Cannot find path")
     else:
         print("\033[92mFound path!\033[0m")
-        swarm_io.write_rrt_plan_file(args.map_file.rstrip('.txt') + '_plan.txt', rrt.path)
+        swarm_io.write_rrt_plan_file(output_file, rrt.path)
         if show_animation:
             rrt.draw_graph(None, True)
 
